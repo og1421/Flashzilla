@@ -7,17 +7,32 @@
 
 import SwiftUI
 
+extension View {
+    func stacked(at position: Int, in total: Int ) -> some View {
+        let offset = Double(total - position)
+        return self.offset(x: 0, y: offset * 10)
+    }
+}
 
 struct ContentView: View {
-    @Environment(\.accessibilityReduceTransparency) var reduceTransparency
-    @State private var scale = 1.0
+    @State private var cards = Array<Card>(repeating: Card.example, count: 10)
     
     var body: some View {
-        Text("Hello World")
-            .padding()
-            .background(reduceTransparency ? .black : .black.opacity(0.5))
-            .foregroundColor(.white)
-            .clipShape(Capsule())
+        ZStack {
+            Image("background")
+                .resizable()
+                .ignoresSafeArea()
+            
+            VStack {
+                ZStack {
+                    ForEach(0..<cards.count, id: \.self) { index in
+                        CardView(card: cards[index])
+                            .stacked(at: index, in: cards.count)
+                    }
+                }
+            }
+        }
+         
     }
 }
 
