@@ -21,6 +21,8 @@ struct ContentView: View {
     @State private var cards = [Card]()
     
     @State private var timeRemaining = 100
+    
+    let savedKey = "Cards.json"
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
     @Environment(\.scenePhase) var scenePhase
@@ -57,7 +59,7 @@ struct ContentView: View {
                 }
                 .allowsHitTesting(timeRemaining > 0)
                 
-                if cards.isEmpty{
+                if cards.isEmpty == true{
                     Button("Start Again", action: resetCards)
                         .padding()
                         .background(.white)
@@ -176,11 +178,24 @@ struct ContentView: View {
     }
     
     func loadData(){
-        if let data = UserDefaults.standard.data(forKey: "Cards") {
-            if let decoded = try? JSONDecoder().decode([Card].self, from: data) {
-                cards = decoded
-            }
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        
+        let url = documentsDirectory.appendingPathComponent(savedKey)
+        
+        guard let data = try? Data(contentsOf: url) else { return }
+        
+        do {
+            cards = try JSONDecoder().decode([Card].self, from: data)
+        } catch {
+            print("Error decoding the file \(error.localizedDescription)")
+            self.cards = []
         }
+
+//        if let data = UserDefaults.standard.data(forKey: "Cards") {
+//            if let decoded = try? JSONDecoder().decode([Card].self, from: data) {
+//                cards = decoded
+//            }
+//        }
     }
 }
 

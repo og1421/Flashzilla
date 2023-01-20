@@ -13,6 +13,8 @@ struct EditCards: View {
     @State private var newPrompt = ""
     @State private var newAnswer = ""
     
+    let savedKey = "Cards.json"
+    
     var body: some View {
         NavigationView{
             List {
@@ -50,22 +52,48 @@ struct EditCards: View {
     }
     
     func loadData(){
-        if let data = UserDefaults.standard.data(forKey: "Cards") {
-            if let decoded = try? JSONDecoder().decode([Card].self, from: data) {
-                cards = decoded
-            }
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        
+        let url = documentsDirectory.appendingPathComponent(savedKey)
+        
+        guard let data = try? Data(contentsOf: url) else { return }
+        
+        do {
+            cards = try JSONDecoder().decode([Card].self, from: data)
+        } catch {
+            print("Error decoding the file \(error.localizedDescription)")
+            self.cards = []
         }
+        
+        
+//        if let data = UserDefaults.standard.data(forKey: "Cards") {
+//            if let decoded = try? JSONDecoder().decode([Card].self, from: data) {
+//                cards = decoded
+//            }
+//        }
     }
     
     func saveData () {
-        if let data = try? JSONEncoder().encode(cards) {
-            UserDefaults.standard.set(data, forKey: "Cards")
+        guard let data = try? JSONEncoder().encode(cards) else {
+            return
+        }
+        
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        
+        let fileURL = documentsDirectory.appendingPathComponent(savedKey)
+        
+        do {
+            try data.write(to: fileURL)
+        } catch {
+            print("Can't save in directory \(error.localizedDescription)")
         }
     }
     
     func addCard() {
         let trimmedPrompt = newPrompt.trimmingCharacters(in: .whitespaces)
         let trimmedAnswer = newAnswer.trimmingCharacters(in: .whitespaces)
+        self.newPrompt = ""
+        self.newAnswer = ""
         
         guard trimmedPrompt.isEmpty == false && trimmedAnswer.isEmpty == false else { return }
         
